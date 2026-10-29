@@ -1,0 +1,31 @@
+{% extends "base.njk" %}
+{% block titulo %}Ayuda{% endblock %}
+{% block contenido %}
+{% set temas = [
+  { id: 'entrar', titulo: 'Entrar y salir de la aplicación', texto: 'Entra con tu correo electrónico y tu contraseña. Para salir, pulsa «Salir» arriba a la derecha, sobre todo si usas un ordenador compartido. Si te equivocas varias veces seguidas, la aplicación bloquea los intentos durante unos minutos por seguridad: espera un poco y vuelve a probar. Si has olvidado la contraseña, pide a la persona que administra la aplicación que te la restablezca.' },
+  { id: 'buscar', titulo: 'Buscar clientes y usar los filtros', texto: 'En «Clientes» escribe en el cuadro de búsqueda parte del nombre de la empresa, de un contacto, del CIF o de un correo electrónico: la lista se actualiza sola. No importan las mayúsculas ni las tildes («clinica» encuentra «Clínica»). Con los desplegables puedes quedarte solo con un estado, un país o un comercial. «Limpiar filtros» los quita todos.' },
+  { id: 'ordenar', titulo: 'Ordenar y cambiar de página', texto: 'Pulsa el título de una columna (Empresa, País, Estado, Facturación o Modificado) para ordenar por ella; si vuelves a pulsarla, se invierte el orden. Debajo de la tabla están los números de página y, a la izquierda, cuántos clientes hay en total. Puedes cambiar cuántos se ven por página.' },
+  { id: 'ficha', titulo: 'Ver la ficha de un cliente', texto: 'Pulsa el nombre de la empresa o el icono del ojo. Arriba se ven los datos del cliente y su facturación acumulada (suma de las bases imponibles, sin IVA). Debajo hay tres pestañas: Contactos, Facturas e Histórico de cambios.' },
+  { id: 'crear', titulo: 'Crear un cliente nuevo', texto: 'Pulsa «Nuevo cliente» en el listado y rellena el formulario. Los campos con asterisco son obligatorios, y bajo cada campo hay una pequeña explicación. Cada cliente necesita al menos un contacto. Si algo no es válido, verás el motivo en rojo junto al campo y no se perderá lo que ya habías escrito.' },
+  { id: 'editar', titulo: 'Modificar un cliente o sus contactos', texto: 'En la ficha, «Editar» cambia los datos de la empresa. En la pestaña «Contactos» puedes añadir, modificar o eliminar contactos. Todos los cambios quedan anotados en el histórico, con la fecha, la persona que los hizo y el valor anterior y el nuevo.' },
+  { id: 'baja', titulo: 'Mover un cliente a la papelera y restaurarlo', texto: 'Eliminar un cliente lo mueve a la papelera: no se borra nada, solo deja de aparecer en el listado normal, y conserva sus contactos, facturas e histórico. Puedes hacerlo con el icono de la papelera de su fila, o marcando varios clientes con las casillas y pulsando «Mover a la papelera». En la ficha, por seguridad, se pide además escribir el CIF. Para recuperar un cliente, abre la pestaña «Papelera» y pulsa «Restaurar» en su fila (o marca varios y pulsa «Restaurar seleccionados»). Un cliente en la papelera no se puede modificar hasta restaurarlo.' },
+  { id: 'historico', titulo: 'El histórico de cambios', texto: 'En la pestaña «Histórico de cambios» de cada ficha se ve quién cambió qué y cuándo: altas, modificaciones, movimientos a la papelera y restauraciones, de la empresa o de sus contactos. Sirve para aclarar dudas del tipo «¿quién cambió este teléfono?». No se puede editar ni borrar.' },
+  { id: 'avisos', titulo: 'Avisos y mensajes habituales', texto: '«El dígito de control del CIF no parece correcto» es solo un aviso: el cliente se guarda igualmente, pero conviene revisar el CIF con una factura. «Ya existe un cliente con ese CIF» significa que esa empresa ya está en la aplicación, quizá en la papelera: búscala en la pestaña Papelera y restáurala en lugar de crearla de nuevo.' },
+  { id: 'facturas', titulo: 'Sobre las facturas', texto: 'Las facturas proceden del Excel anterior y son de solo consulta: no se pueden crear ni modificar desde aquí. El total de cada factura se calcula a partir de su base imponible y su IVA.' }
+] %}
+<h1 class="h3 mb-1">Ayuda</h1>
+<p class="text-secondary">Respuestas a las dudas más habituales. Si algo no funciona como se explica aquí, avisa a la persona que administra la aplicación.</p>
+<div class="accordion shadow-sm" id="ayuda">
+  {% for t in temas %}
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#tema-{{ t.id }}"
+              aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="tema-{{ t.id }}">{{ t.titulo }}</button>
+    </h2>
+    <div id="tema-{{ t.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#ayuda">
+      <div class="accordion-body">{{ t.texto }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.njk" %}
+{% block titulo %}{{ 'Papelera' if enPapelera else 'Clientes' }}{% endblock %}
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Clientes</h1>
+  <a class="btn btn-primary" href="/clientes/nuevo"><i class="bi bi-plus-lg me-1"></i>Nuevo cliente</a>
+</div>
+
+{# Pestañas: son enlaces normales, así que funcionan sin JavaScript y cada una tiene su propia dirección. #}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if not enPapelera %}active{% endif %}" {% if not enPapelera %}aria-current="page"{% endif %} href="{{ urlPestana(false) }}"><i class="bi bi-people me-1"></i>Clientes</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if enPapelera %}active{% endif %}" {% if enPapelera %}aria-current="page"{% endif %} href="{{ urlPestana(true) }}"><i class="bi bi-trash me-1"></i>Papelera{% if totalPapelera %} <span class="badge text-bg-secondary">{{ totalPapelera }}</span>{% endif %}</a>
+  </li>
+</ul>
+
+{# Filtros. Con JavaScript la tabla se actualiza sola (htmx); sin él, al pulsar Intro en la búsqueda se envía el formulario. #}
+<form id="filtros" class="card card-body shadow-sm mb-3" method="get" action="/clientes"
+      hx-get="/clientes" hx-target="#resultado" hx-push-url="true" hx-indicator="#cargando"
+      hx-trigger="submit, input delay:300ms from:#q, change from:.filtro">
+  <div class="row g-3 align-items-end">
+    <div class="col-12 col-lg-4">
+      <label for="q" class="form-label">Buscar</label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="search" class="form-control" id="q" name="q" value="{{ filtros.q }}"
+               placeholder="Empresa, contacto, CIF o email" maxlength="100" autocomplete="off">
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label for="estado" class="form-label">Estado</label>
+      <select class="form-select filtro" id="estado" name="estado">
+        <option value="">Todos</option>
+        {% for e in estados %}<option value="{{ e }}" {% if filtros.estado == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label for="pais" class="form-label">País</label>
+      <select class="form-select filtro" id="pais" name="pais">
+        <option value="">Todos</option>
+        {% for p in paises %}<option value="{{ p }}" {% if filtros.pais == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label for="comercial" class="form-label">Comercial</label>
+      <select class="form-select filtro" id="comercial" name="comercial">
+        <option value="">Todos</option>
+        {% for c in comerciales %}<option value="{{ c.id }}" {% if filtros.comercial == c.id | string %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label for="porPagina" class="form-label">Por página</label>
+      <select class="form-select filtro" id="porPagina" name="porPagina">
+        {% for n in [10, 25, 50] %}<option value="{{ n }}" {% if (filtros.porPagina or '10') == n | string %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-12 d-flex flex-wrap align-items-center justify-content-end gap-3">
+      {# Se conservan la pestaña y el orden elegidos al filtrar #}
+      {% if enPapelera %}<input type="hidden" name="eliminados" value="true">{% endif %}
+      {% if filtros.orden %}<input type="hidden" name="orden" value="{{ filtros.orden }}">{% endif %}
+      {% if filtros.direccion %}<input type="hidden" name="direccion" value="{{ filtros.direccion }}">{% endif %}
+      <span id="cargando" class="htmx-indicator spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Cargando…</span>
+      </span>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ urlLimpiar }}">Limpiar filtros</a>
+    </div>
+  </div>
+</form>
+
+{% if enPapelera %}
+  <p class="text-secondary small">Los clientes de la papelera no aparecen en el listado normal, pero conservan sus contactos, facturas e histórico. Puedes restaurarlos cuando quieras.</p>
+{% endif %}
+
+<div id="resultado">
+  {% include "clientes/_resultado.njk" %}
+</div>
+
+{# Ventanas de confirmación. Están fuera de #resultado para que no se pierdan al actualizar la tabla.
+   Mover a la papelera es reversible, por eso aquí basta una confirmación (en la ficha se pide además el CIF). #}
+{% if not enPapelera %}
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="tituloEliminar" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="/clientes/lote">
+      <input type="hidden" name="accion" value="papelera">
+      <input type="hidden" name="ids" value="" data-id-cliente>
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tituloEliminar">Mover a la papelera</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Mover a <strong data-nombre-cliente></strong> a la papelera?</p>
+        <p class="mb-0 text-secondary">No se borra nada: contactos, facturas e histórico se conservan y podrás restaurarlo desde la pestaña Papelera.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-danger">Mover a la papelera</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="modalLote" tabindex="-1" aria-labelledby="tituloLote" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tituloLote">Mover a la papelera</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Mover a la papelera los <strong data-cuenta-lote>0</strong> clientes seleccionados?</p>
+        <p class="mb-0 text-secondary">No se borra nada: podrás restaurarlos desde la pestaña Papelera.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        {# Este botón envía el formulario de la tabla (#formLote) aunque esté fuera de él #}
+        <button type="submit" form="formLote" name="accion" value="papelera" class="btn btn-danger">Mover a la papelera</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

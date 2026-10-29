@@ -1,0 +1,55 @@
+# Servicios de la aplicación. Se arrancan con:  docker compose up
+#
+# Funciona sin crear ningún fichero: si no existe .env se usan los valores
+# por defecto de desarrollo que aparecen aquí. Para cambiarlos:
+#   cp .env.example .env   (y editar .env)
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-clientes}
+      POSTGRES_USER: ${DB_USER:-clientes}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-clientes_dev}
+    volumes:
+      # Los datos sobreviven aunque se pare o se recree el contenedor.
+      - datos_db:/var/lib/postgresql/data
+    # La base de datos no se publica fuera de Docker: solo la ve la aplicación.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        # La aplicación arranca cuando la base de datos ya acepta conexiones.
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@ejemplo.es}
+      # Vacía = se genera una contraseña aleatoria y se muestra una vez en el log.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      IMPORTAR_AL_ARRANCAR: ${IMPORTAR_AL_ARRANCAR:-true}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-clientes}
+      DB_USER: ${DB_USER:-clientes}
+      DB_PASSWORD: ${DB_PASSWORD:-clientes_dev}
+    ports:
+      - "${PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/salud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  datos_db:

@@ -1,0 +1,25 @@
+/* Ajustes mínimos sobre Bootstrap. Todo el estilo "en línea" vive aquí
+   porque la política de seguridad (CSP) no permite estilos dentro del HTML. */
+
+/* Indicador de carga de htmx: invisible hasta que hay una petición en curso. */
+.htmx-indicator { opacity: 0; transition: opacity 150ms ease-in; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
+
+.tarjeta-acceso { width: 100%; max-width: 24rem; }
+.icono-marca { font-size: 2.5rem; }
+
+/* Cabeceras de columna ordenables */
+.tabla-clientes th a { color: inherit; text-decoration: none; white-space: nowrap; }
+.tabla-clientes th a:hover { text-decoration: underline; }
+.tabla-clientes .columna-importe { text-align: right; white-space: nowrap; }
+.tabla-clientes .texto-secundario { font-size: .8125rem; }
+
+/* Columna de casillas de selección */
+.tabla-clientes .columna-seleccion { width: 2.5rem; }
+
+/* El usuario de la barra superior no debe desbordar en pantallas pequeñas */
+.usuario-barra { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Acciones del listado y ficha del cliente */
+.cifra-grande { font-size: 2rem; font-weight: 600; line-height: 1.2; }
+.valor-historico { overflow-wrap: anywhere; }

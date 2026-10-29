@@ -1,0 +1,25 @@
+{
+  "name": "gestion-clientes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gestión de clientes, contactos y facturas",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "migrar": "node --env-file-if-exists=.env scripts/migrar.js",
+    "importar": "node --env-file-if-exists=.env scripts/importar.js",
+    "dev": "node --watch --env-file=.env src/server.js",
+    "test": "node --import ./tests/ayudas/entorno.js --test --test-reporter=spec \"tests/**/*.test.js\""
+  },
+  "dependencies": {
+    "bootstrap": "5.3.8",
+    "bootstrap-icons": "1.13.2",
+    "express": "^5.3.0",
+    "htmx.org": "2.0.11",
+    "nunjucks": "3.2.4",
+    "pg": "^8.23.1"
+  }
+}

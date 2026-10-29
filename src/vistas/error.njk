@@ -1,0 +1,10 @@
+{% extends "base.njk" %}
+{% block titulo %}Error {{ estado }}{% endblock %}
+{% block contenido %}
+<div class="text-center py-5">
+  <i class="bi bi-exclamation-triangle display-3 text-warning"></i>
+  <h1 class="h3 mt-3">{{ estado }}</h1>
+  <p class="text-secondary">{{ mensaje }}</p>
+  <a class="btn btn-primary" href="/clientes">Volver a clientes</a>
+</div>
+{% endblock %}

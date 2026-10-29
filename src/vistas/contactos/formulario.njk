@@ -1,0 +1,31 @@
+{% extends "base.njk" %}
+{% from "_macros.njk" import campo, resumenErrores %}
+{% block titulo %}{{ 'Nuevo contacto' if modo == 'crear' else 'Editar contacto' }}{% endblock %}
+{% block contenido %}
+{% set f = { valores: valores, errores: errores } %}
+<nav aria-label="Ruta de navegación">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/clientes">Clientes</a></li>
+    <li class="breadcrumb-item"><a href="/clientes/{{ cliente.id }}">{{ cliente.empresa }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ 'Nuevo contacto' if modo == 'crear' else 'Editar contacto' }}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-1">{{ 'Nuevo contacto' if modo == 'crear' else 'Editar contacto' }}</h1>
+<p class="text-secondary">Contacto de <strong>{{ cliente.empresa }}</strong>. Los campos marcados con <span class="text-danger">*</span> son obligatorios.</p>
+
+{{ resumenErrores(errores, errorGeneral) }}
+
+<form method="post" action="{{ accion }}" class="card shadow-sm">
+  <div class="card-body">
+    <div class="row g-3">
+      {{ campo(f, 'nombre', 'Nombre y apellidos', 'Persona de contacto en la empresa.', { requerido: true, max: 150, columnas: 'col-md-4' }) }}
+      {{ campo(f, 'email', 'Correo electrónico', 'Se guardará en minúsculas y no puede repetirse en el mismo cliente.', { requerido: true, tipo: 'email', max: 254, columnas: 'col-md-4' }) }}
+      {{ campo(f, 'telefono', 'Teléfono', 'Con prefijo si es de otro país (+351 22 123 45 67).', { tipo: 'tel', max: 30, columnas: 'col-md-4' }) }}
+    </div>
+  </div>
+  <div class="card-footer d-flex flex-wrap gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'Añadir contacto' if modo == 'crear' else 'Guardar cambios' }}</button>
+    <a class="btn btn-outline-secondary" href="/clientes/{{ cliente.id }}#contactos">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.njk" %}
+{% from "_macros.njk" import campo, selector, resumenErrores %}
+{% block titulo %}{{ 'Nuevo cliente' if modo == 'crear' else 'Editar ' + cliente.empresa }}{% endblock %}
+{% block contenido %}
+{% set f = { valores: valores, errores: errores } %}
+<nav aria-label="Ruta de navegación">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/clientes">Clientes</a></li>
+    {% if modo == 'editar' %}<li class="breadcrumb-item"><a href="/clientes/{{ cliente.id }}">{{ cliente.empresa }}</a></li>{% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{{ 'Nuevo cliente' if modo == 'crear' else 'Editar' }}</li>
+  </ol>
+</nav>
+<h1 class="h3 mb-1">{{ 'Nuevo cliente' if modo == 'crear' else 'Editar cliente' }}</h1>
+<p class="text-secondary">Los campos marcados con <span class="text-danger">*</span> son obligatorios.</p>
+
+{{ resumenErrores(errores, errorGeneral) }}
+
+<form method="post" action="{{ accion }}">
+  <div class="card shadow-sm mb-3">
+    <div class="card-header fw-semibold">Datos de la empresa</div>
+    <div class="card-body">
+      <div class="row g-3">
+        {{ campo(f, 'empresa', 'Empresa', '', { requerido: true, max: 200 }) }}
+        {{ campo(f, 'cif', 'CIF / NIF / número de IVA', 'En España, letra y números (B50123456). En otros países, el número de IVA con su prefijo (PT509876543).', { requerido: true, max: 30 }) }}
+        {% call selector(f, 'pais', 'País', 'Define el formato que se espera para el CIF.', { requerido: true }) %}
+          {% for p in paises %}<option value="{{ p }}" {% if valores.pais == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+        {% endcall %}
+        {% call selector(f, 'estado', 'Estado', 'Un cliente inactivo sigue en la lista, pero se distingue de los activos.', { requerido: true }) %}
+          {% for e in estados %}<option value="{{ e }}" {% if valores.estado == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
+        {% endcall %}
+        {{ campo(f, 'direccion', 'Dirección', '', { columnas: 'col-12', max: 200, autocompletar: 'street-address' }) }}
+        {{ campo(f, 'cp', 'Código postal', '', { max: 12, modo: 'text', columnas: 'col-sm-4' }) }}
+        {{ campo(f, 'ciudad', 'Ciudad', '', { max: 100, columnas: 'col-sm-8' }) }}
+        {% call selector(f, 'comercialId', 'Comercial asignado', 'La persona de tu equipo que atiende a este cliente.') %}
+          <option value="">Sin asignar</option>
+          {% for c in comerciales %}<option value="{{ c.id }}" {% if valores.comercialId and valores.comercialId | string == c.id | string %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+        {% endcall %}
+        {{ campo(f, 'fechaAlta', 'Fecha de alta', '', { tipo: 'date' }) }}
+      </div>
+    </div>
+  </div>
+
+  {% if modo == 'crear' %}
+  <div class="card shadow-sm mb-3">
+    <div class="card-header fw-semibold">Contacto principal</div>
+    <div class="card-body">
+      <p class="text-secondary small">Todo cliente necesita al menos un contacto. Podrás añadir más desde su ficha.</p>
+      <div class="row g-3">
+        {{ campo(f, 'contactoNombre', 'Nombre y apellidos', '', { requerido: true, max: 150, columnas: 'col-md-4', autocompletar: 'off' }) }}
+        {{ campo(f, 'contactoEmail', 'Correo electrónico', 'No puede repetirse en el mismo cliente.', { requerido: true, tipo: 'email', max: 254, columnas: 'col-md-4' }) }}
+        {{ campo(f, 'contactoTelefono', 'Teléfono', '', { tipo: 'tel', max: 30, columnas: 'col-md-4' }) }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="d-flex flex-wrap gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'Crear cliente' if modo == 'crear' else 'Guardar cambios' }}</button>
+    <a class="btn btn-outline-secondary" href="{{ '/clientes' if modo == 'crear' else '/clientes/' + cliente.id }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,133 @@
+### Colección de ejemplos de la API
+###
+### Se puede usar con la extensión "REST Client" de VS Code (o con IntelliJ/WebStorm,
+### que entienden este formato). Pulsa "Send Request" sobre cada petición.
+### Equivalente en consola: cada ejemplo se puede copiar como `curl`.
+###
+### 1) Ejecuta primero "Iniciar sesión": guarda el token en la variable @token.
+### 2) El resto de peticiones lo usan automáticamente.
+
+@servidor = http://localhost:3000
+@contentType = application/json
+
+### ---------------------------------------------------------------- Acceso
+
+### Iniciar sesión (usa el email y la contraseña del administrador; ver README)
+# @name login
+POST {{servidor}}/api/auth/login
+Content-Type: {{contentType}}
+
+{ "email": "admin@ejemplo.es", "clave": "TU_CONTRASEÑA" }
+
+###
+@token = {{login.response.body.token}}
+
+### Quién soy (comprueba que el token funciona)
+GET {{servidor}}/api/auth/yo
+Authorization: Bearer {{token}}
+
+### Cerrar sesión (el token deja de valer)
+POST {{servidor}}/api/auth/logout
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------- Clientes
+
+### Listado (por defecto: 10 por página, ordenado por empresa)
+GET {{servidor}}/api/clientes
+Authorization: Bearer {{token}}
+
+### Listado con búsqueda, filtros, orden y paginación.
+### q busca en empresa, contacto, CIF y email (sin distinguir mayúsculas ni tildes).
+### Orden: empresa, ciudad, pais, estado, fechaAlta, modificadoEn, facturacion (direccion=asc|desc)
+GET {{servidor}}/api/clientes?q=clinica&estado=Activo&pais=España&comercial=1&orden=facturacion&direccion=desc&pagina=1&porPagina=25
+Authorization: Bearer {{token}}
+
+### Clientes en la papelera (borrado lógico)
+GET {{servidor}}/api/clientes?eliminados=true
+Authorization: Bearer {{token}}
+
+### Ficha: cliente con contactos, facturas y facturación acumulada (sin IVA)
+GET {{servidor}}/api/clientes/1
+Authorization: Bearer {{token}}
+
+### Crear cliente (al menos un contacto). Devuelve 201 y la cabecera Location.
+### "avisos" puede avisar de un dígito de control de CIF dudoso (no bloquea el alta).
+POST {{servidor}}/api/clientes
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "empresa": "Taller Nuevo SL",
+  "cif": "B12345674",
+  "direccion": "Carrer Major, 5",
+  "cp": "17001",
+  "ciudad": "Girona",
+  "pais": "España",
+  "comercialId": 1,
+  "estado": "Activo",
+  "fechaAlta": "2026-10-29",
+  "contactos": [
+    { "nombre": "Marc Vila", "email": "marc@tallernuevo.es", "telefono": "972 11 22 33" }
+  ]
+}
+
+### Actualizar: solo se modifican los campos enviados. null vacía un campo opcional.
+PUT {{servidor}}/api/clientes/1
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{ "ciudad": "Huesca", "estado": "Inactivo", "direccion": null }
+
+### Eliminar (borrado lógico, responde 204). Se puede restaurar.
+DELETE {{servidor}}/api/clientes/1
+Authorization: Bearer {{token}}
+
+### Restaurar un cliente de la papelera
+POST {{servidor}}/api/clientes/1/restaurar
+Authorization: Bearer {{token}}
+
+### Histórico de cambios (más recientes primero; pagina y porPagina opcionales)
+GET {{servidor}}/api/clientes/1/historico?pagina=1&porPagina=20
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------- Contactos
+
+### Añadir un contacto
+POST {{servidor}}/api/clientes/1/contactos
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{ "nombre": "Sara Gómez", "email": "sara@empresa.es", "telefono": "600 111 222" }
+
+### Modificar un contacto (solo los campos enviados)
+PUT {{servidor}}/api/clientes/1/contactos/1
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{ "telefono": "600 333 444" }
+
+### Eliminar un contacto (un cliente debe conservar al menos uno)
+DELETE {{servidor}}/api/clientes/1/contactos/1
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------- Listas auxiliares
+
+### Comerciales (para el filtro)
+GET {{servidor}}/api/comerciales
+Authorization: Bearer {{token}}
+
+### Países admitidos
+GET {{servidor}}/api/paises
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------- Errores típicos
+
+### 401: sin token
+GET {{servidor}}/api/clientes
+
+### 400: datos inválidos (la respuesta lista cada campo con su problema)
+POST {{servidor}}/api/clientes
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{ "empresa": "", "cif": "XX", "pais": "Narnia", "contactos": [] }

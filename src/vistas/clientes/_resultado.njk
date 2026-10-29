@@ -1,0 +1,134 @@
+{# Tabla y paginación. Es lo único que se sustituye cuando htmx actualiza el listado. #}
+<div aria-live="polite">
+{% if errorFiltros %}
+  <div class="alert alert-warning" role="alert">{{ errorFiltros }}</div>
+{% endif %}
+
+{% macro cabecera(columna, texto, clases) %}
+  <th scope="col" class="{{ clases }}" {% if filtros.orden == columna or (not filtros.orden and columna == 'empresa') %}aria-sort="{{ 'descending' if filtros.direccion == 'desc' else 'ascending' }}"{% endif %}>
+    <a href="{{ urlOrden(columna) }}" hx-get="{{ urlOrden(columna) }}" hx-target="#resultado" hx-push-url="true">{{ texto }}
+      {% if filtros.orden == columna or (not filtros.orden and columna == 'empresa') %}
+        <i class="bi {{ 'bi-caret-down-fill' if filtros.direccion == 'desc' else 'bi-caret-up-fill' }}"></i>
+      {% endif %}
+    </a>
+  </th>
+{% endmacro %}
+
+{% if datos.length == 0 %}
+  {% set hayFiltros = filtros.q or filtros.estado or filtros.pais or filtros.comercial %}
+  <div class="card shadow-sm"><div class="card-body text-center py-5 text-secondary">
+    {% if enPapelera and not hayFiltros %}
+      <i class="bi bi-trash display-5"></i>
+      <p class="fw-semibold mt-3 mb-0">La papelera está vacía</p>
+    {% else %}
+      <i class="bi bi-search display-5"></i>
+      <p class="fw-semibold mt-3 mb-1">No hay clientes que coincidan</p>
+      <p class="mb-3">Prueba con otra búsqueda o quita algún filtro.</p>
+      <a href="{{ urlLimpiar }}" hx-get="{{ urlLimpiar }}" hx-target="#resultado" hx-push-url="true">Quitar todos los filtros</a>
+    {% endif %}
+  </div></div>
+{% else %}
+  {# Formulario vacío: las casillas y los botones de selección lo usan con el atributo form="formLote". #}
+  <form id="formLote" method="post" action="/clientes/lote"></form>
+  <div class="card shadow-sm">
+    {# Barra de acciones sobre lo seleccionado. Está oculta hasta marcar alguna casilla (lo gestiona app.js). #}
+    <div data-barra-lote hidden>
+      <div class="d-flex flex-wrap align-items-center gap-3 px-3 py-2 border-bottom bg-body-secondary">
+        <span><strong data-cuenta>0</strong> seleccionados</span>
+        {% if enPapelera %}
+          <button type="submit" form="formLote" name="accion" value="restaurar" class="btn btn-success btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar seleccionados</button>
+        {% else %}
+          <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalLote"><i class="bi bi-trash me-1"></i>Mover a la papelera</button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 tabla-clientes">
+        <caption class="visually-hidden">Listado de clientes</caption>
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="columna-seleccion"><input class="form-check-input" type="checkbox" data-seleccionar-todo aria-label="Seleccionar todos los clientes de esta página"></th>
+            {{ cabecera('empresa', 'Empresa', '') }}
+            <th scope="col" class="d-none d-md-table-cell">Contacto</th>
+            {{ cabecera('pais', 'País', 'd-none d-lg-table-cell') }}
+            <th scope="col" class="d-none d-xl-table-cell">Comercial</th>
+            {{ cabecera('estado', 'Estado', '') }}
+            {{ cabecera('facturacion', 'Facturación', 'columna-importe') }}
+            {% if enPapelera %}
+              <th scope="col" class="d-none d-xl-table-cell">Eliminado</th>
+            {% else %}
+              {{ cabecera('modificadoEn', 'Modificado', 'd-none d-xl-table-cell') }}
+            {% endif %}
+            <th scope="col" class="text-end"><span class="visually-hidden">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in datos %}
+          <tr>
+            <td><input class="form-check-input" type="checkbox" form="formLote" name="ids" value="{{ c.id }}" data-fila aria-label="Seleccionar a {{ c.empresa }}"></td>
+            <td>
+              <a class="fw-semibold text-decoration-none" href="/clientes/{{ c.id }}">{{ c.empresa }}</a>
+              <div class="text-secondary texto-secundario">{{ c.cif }}{% if c.ciudad %} · {{ c.ciudad }}{% endif %}</div>
+            </td>
+            <td class="d-none d-md-table-cell">
+              {% if c.contactoPrincipal %}
+                <div>{{ c.contactoPrincipal.nombre }}</div>
+                <div class="text-secondary texto-secundario">{{ c.contactoPrincipal.email }}</div>
+              {% endif %}
+            </td>
+            <td class="d-none d-lg-table-cell">{{ c.pais }}</td>
+            <td class="d-none d-xl-table-cell">{{ c.comercial.nombre if c.comercial else '—' }}</td>
+            <td>
+              {% if c.eliminadoEn %}
+                <span class="badge text-bg-danger">En la papelera</span>
+              {% elif c.estado == 'Activo' %}
+                <span class="badge text-bg-success">Activo</span>
+              {% else %}
+                <span class="badge text-bg-secondary">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="columna-importe">{{ c.facturacionAcumulada | euros }}</td>
+            <td class="d-none d-xl-table-cell text-secondary texto-secundario">{{ (c.eliminadoEn if enPapelera else c.modificadoEn) | fechaHora }}</td>
+            <td class="text-end text-nowrap">
+              <a class="btn btn-outline-secondary btn-sm" href="/clientes/{{ c.id }}" aria-label="Ver la ficha de {{ c.empresa }}"><i class="bi bi-eye"></i></a>
+              {% if c.eliminadoEn %}
+                {# Restaurar no necesita confirmación: no destruye nada. Es un formulario propio (no se pueden anidar formularios). #}
+                <form class="d-inline" method="post" action="/clientes/lote">
+                  <input type="hidden" name="accion" value="restaurar">
+                  <input type="hidden" name="ids" value="{{ c.id }}">
+                  <button class="btn btn-outline-success btn-sm" type="submit" aria-label="Restaurar a {{ c.empresa }}"><i class="bi bi-arrow-counterclockwise"></i></button>
+                </form>
+              {% else %}
+                <a class="btn btn-outline-primary btn-sm" href="/clientes/{{ c.id }}/editar" aria-label="Editar a {{ c.empresa }}"><i class="bi bi-pencil"></i></a>
+                <button class="btn btn-outline-danger btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalEliminar"
+                        data-id="{{ c.id }}" data-empresa="{{ c.empresa }}" aria-label="Mover a la papelera a {{ c.empresa }}"><i class="bi bi-trash"></i></button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <span class="text-secondary small">Mostrando {{ desde }}–{{ hasta }} de {{ paginacion.total }}</span>
+      {% if paginacion.totalPaginas > 1 %}
+      <nav aria-label="Paginación del listado">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item {% if paginacion.pagina == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ urlPagina(paginacion.pagina - 1) }}" hx-get="{{ urlPagina(paginacion.pagina - 1) }}" hx-target="#resultado" hx-push-url="true" aria-label="Anterior">&laquo;</a>
+          </li>
+          {% for n in paginasVisibles %}
+          <li class="page-item {% if n == paginacion.pagina %}active{% endif %}">
+            <a class="page-link" href="{{ urlPagina(n) }}" hx-get="{{ urlPagina(n) }}" hx-target="#resultado" hx-push-url="true" {% if n == paginacion.pagina %}aria-current="page"{% endif %}>{{ n }}</a>
+          </li>
+          {% endfor %}
+          <li class="page-item {% if paginacion.pagina == paginacion.totalPaginas %}disabled{% endif %}">
+            <a class="page-link" href="{{ urlPagina(paginacion.pagina + 1) }}" hx-get="{{ urlPagina(paginacion.pagina + 1) }}" hx-target="#resultado" hx-push-url="true" aria-label="Siguiente">&raquo;</a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+</div>

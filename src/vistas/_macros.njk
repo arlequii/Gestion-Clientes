@@ -1,0 +1,38 @@
+{# Piezas reutilizables de los formularios. `f` agrupa los valores escritos y los errores por campo. #}
+
+{# Campo de texto con etiqueta, texto de ayuda y mensaje de error. #}
+{% macro campo(f, nombre, etiqueta, ayuda, o) %}
+{% set o = o or {} %}
+<div class="{{ o.columnas or 'col-md-6' }}">
+  <label for="{{ nombre }}" class="form-label">{{ etiqueta }}{% if o.requerido %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}</label>
+  <input type="{{ o.tipo or 'text' }}" class="form-control{% if f.errores[nombre] %} is-invalid{% endif %}" id="{{ nombre }}" name="{{ nombre }}"
+         value="{{ f.valores[nombre] }}" {% if o.max %}maxlength="{{ o.max }}"{% endif %} {% if o.requerido %}required{% endif %}
+         {% if o.modo %}inputmode="{{ o.modo }}"{% endif %} autocomplete="{{ o.autocompletar or 'off' }}"
+         {% if ayuda or f.errores[nombre] %}aria-describedby="{% if ayuda %}{{ nombre }}-ayuda {% endif %}{% if f.errores[nombre] %}{{ nombre }}-error{% endif %}"{% endif %}>
+  {% if f.errores[nombre] %}<div class="invalid-feedback" id="{{ nombre }}-error">{{ f.errores[nombre] }}</div>{% endif %}
+  {% if ayuda %}<div class="form-text" id="{{ nombre }}-ayuda">{{ ayuda }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# Desplegable. Las opciones (<option>) se pasan dentro del bloque {% call %}. #}
+{% macro selector(f, nombre, etiqueta, ayuda, o) %}
+{% set o = o or {} %}
+<div class="{{ o.columnas or 'col-md-6' }}">
+  <label for="{{ nombre }}" class="form-label">{{ etiqueta }}{% if o.requerido %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}</label>
+  <select class="form-select{% if f.errores[nombre] %} is-invalid{% endif %}" id="{{ nombre }}" name="{{ nombre }}" {% if o.requerido %}required{% endif %}
+          {% if ayuda or f.errores[nombre] %}aria-describedby="{% if ayuda %}{{ nombre }}-ayuda {% endif %}{% if f.errores[nombre] %}{{ nombre }}-error{% endif %}"{% endif %}>
+    {{ caller() }}
+  </select>
+  {% if f.errores[nombre] %}<div class="invalid-feedback" id="{{ nombre }}-error">{{ f.errores[nombre] }}</div>{% endif %}
+  {% if ayuda %}<div class="form-text" id="{{ nombre }}-ayuda">{{ ayuda }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# Aviso de errores al principio del formulario. #}
+{% macro resumenErrores(errores, errorGeneral) %}
+{% if errorGeneral %}
+  <div class="alert alert-danger" role="alert">{{ errorGeneral }}</div>
+{% elif errores | length %}
+  <div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-octagon me-1"></i>Revisa los campos marcados en rojo: hay datos que no se han podido guardar.</div>
+{% endif %}
+{% endmacro %}

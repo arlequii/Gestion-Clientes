@@ -1,0 +1,228 @@
+{% extends "base.njk" %}
+{% block titulo %}{{ cliente.empresa }}{% endblock %}
+{% block contenido %}
+{% set colores = { alta: 'success', modificacion: 'primary', baja: 'danger', restauracion: 'info', eliminacion: 'warning' } %}
+<nav aria-label="Ruta de navegación">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ '/clientes?eliminados=true' if cliente.eliminadoEn else '/clientes' }}">{{ 'Papelera' if cliente.eliminadoEn else 'Clientes' }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ cliente.empresa }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">{{ cliente.empresa }}</h1>
+    {% if cliente.eliminadoEn %}<span class="badge text-bg-danger">En la papelera</span>
+    {% elif cliente.estado == 'Activo' %}<span class="badge text-bg-success">Activo</span>
+    {% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}
+    <span class="text-secondary ms-1">{{ cliente.cif }}</span>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    {% if cliente.eliminadoEn %}
+      <form method="post" action="/clientes/{{ cliente.id }}/restaurar">
+        <button class="btn btn-success" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar cliente</button>
+      </form>
+    {% else %}
+      <a class="btn btn-primary" href="/clientes/{{ cliente.id }}/editar"><i class="bi bi-pencil me-1"></i>Editar</a>
+      <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#modalBaja"><i class="bi bi-trash me-1"></i>Mover a la papelera</button>
+    {% endif %}
+  </div>
+</div>
+
+{% if cliente.eliminadoEn %}
+  <div class="alert alert-secondary" role="status">Este cliente está en la papelera desde el {{ cliente.eliminadoEn | fechaHora }}. No se puede modificar hasta que lo restaures; sus datos, facturas e histórico siguen guardados.</div>
+{% endif %}
+{% if avisoControl %}
+  <div class="alert alert-warning" role="status"><i class="bi bi-exclamation-triangle me-1"></i>El dígito de control del CIF {{ cliente.cif }} no parece correcto. Revísalo con el cliente o con una factura suya.</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold">Datos del cliente</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Dirección</dt><dd class="col-sm-8">{{ cliente.direccion or '—' }}</dd>
+          <dt class="col-sm-4">Código postal y ciudad</dt><dd class="col-sm-8">{{ ((cliente.cp or '') + ' ' + (cliente.ciudad or '')) | trim or '—' }}</dd>
+          <dt class="col-sm-4">País</dt><dd class="col-sm-8">{{ cliente.pais }}</dd>
+          <dt class="col-sm-4">Comercial asignado</dt><dd class="col-sm-8">{{ cliente.comercial.nombre if cliente.comercial else 'Sin asignar' }}</dd>
+          <dt class="col-sm-4">Fecha de alta</dt><dd class="col-sm-8">{{ cliente.fechaAlta | fecha }}</dd>
+          <dt class="col-sm-4">Última modificación</dt><dd class="col-sm-8 mb-0">{{ cliente.modificadoEn | fechaHora }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold">Facturación acumulada</div>
+      <div class="card-body">
+        <div class="cifra-grande">{{ cliente.facturacionAcumulada | euros }}</div>
+        <p class="text-secondary small mb-0">Suma de las bases imponibles de sus {{ cliente.facturas.length }} facturas, sin IVA.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Pestañas (Bootstrap). El enlace #contactos, #facturas o #historico abre la pestaña correspondiente (ver app.js). #}
+{% macro boton(id, texto, cantidad) %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if pestana == id %}active{% endif %}" id="pestana-{{ id }}" type="button" role="tab"
+            data-bs-toggle="tab" data-bs-target="#{{ id }}" aria-controls="{{ id }}" aria-selected="{{ 'true' if pestana == id else 'false' }}">
+      {{ texto }} <span class="badge text-bg-secondary">{{ cantidad }}</span>
+    </button>
+  </li>
+{% endmacro %}
+<ul class="nav nav-tabs mb-3" role="tablist">
+  {{ boton('contactos', 'Contactos', cliente.contactos.length) }}
+  {{ boton('facturas', 'Facturas', cliente.facturas.length) }}
+  {{ boton('historico', 'Histórico de cambios', paginacionHistorico.total) }}
+</ul>
+
+<div class="tab-content">
+
+  <div class="tab-pane fade {% if pestana == 'contactos' %}show active{% endif %}" id="contactos" role="tabpanel" aria-labelledby="pestana-contactos" tabindex="0">
+    <section class="card shadow-sm mb-3">
+      {% if not cliente.eliminadoEn %}
+      <div class="card-header text-end">
+        <a class="btn btn-outline-primary btn-sm" href="/clientes/{{ cliente.id }}/contactos/nuevo"><i class="bi bi-plus-lg me-1"></i>Añadir contacto</a>
+      </div>
+      {% endif %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <caption class="visually-hidden">Contactos del cliente</caption>
+          <thead class="table-light"><tr><th scope="col">Nombre</th><th scope="col">Correo electrónico</th><th scope="col">Teléfono</th><th scope="col" class="text-end"><span class="visually-hidden">Acciones</span></th></tr></thead>
+          <tbody>
+            {% for c in cliente.contactos %}
+            <tr>
+              <td>{{ c.nombre }}</td>
+              <td><a href="mailto:{{ c.email }}">{{ c.email }}</a></td>
+              <td>{% if c.telefono %}<a href="tel:{{ c.telefono | replace(' ', '') }}">{{ c.telefono }}</a>{% else %}—{% endif %}</td>
+              <td class="text-end text-nowrap">
+                {% if not cliente.eliminadoEn %}
+                  <a class="btn btn-outline-secondary btn-sm" href="/clientes/{{ cliente.id }}/contactos/{{ c.id }}/editar" aria-label="Editar a {{ c.nombre }}"><i class="bi bi-pencil"></i></a>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalContacto{{ c.id }}" aria-label="Eliminar a {{ c.nombre }}"><i class="bi bi-trash"></i></button>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="tab-pane fade {% if pestana == 'facturas' %}show active{% endif %}" id="facturas" role="tabpanel" aria-labelledby="pestana-facturas" tabindex="0">
+    <section class="card shadow-sm mb-3">
+      {% if cliente.facturas.length == 0 %}
+        <div class="card-body text-secondary">Este cliente todavía no tiene facturas.</div>
+      {% else %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <caption class="visually-hidden">Facturas del cliente</caption>
+          <thead class="table-light"><tr><th scope="col">Número</th><th scope="col">Fecha</th><th scope="col" class="text-end">Base imponible</th><th scope="col" class="text-end">IVA</th><th scope="col" class="text-end">Total</th></tr></thead>
+          <tbody>
+            {% for f in cliente.facturas %}
+            <tr><td>{{ f.numero }}{% if f.baseImponible < 0 %} <span class="badge text-bg-info">Abono / rectificativa</span>{% endif %}</td><td>{{ f.fechaFactura | fecha }}</td><td class="text-end">{{ f.baseImponible | euros }}</td><td class="text-end">{{ f.ivaPorcentaje | porcentaje }}</td><td class="text-end fw-semibold">{{ f.total | euros }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer text-secondary small">Las facturas proceden de la importación del Excel anterior y son de solo consulta.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="tab-pane fade {% if pestana == 'historico' %}show active{% endif %}" id="historico" role="tabpanel" aria-labelledby="pestana-historico" tabindex="0">
+    {# id propio para que htmx sustituya solo esta tarjeta al cambiar de página, sin tocar la pestaña #}
+    <section class="card shadow-sm mb-3" id="historico-contenido">
+      {% if historico.length == 0 %}
+        <div class="card-body text-secondary">Todavía no hay cambios registrados para este cliente.</div>
+      {% else %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <caption class="visually-hidden">Histórico de cambios del cliente</caption>
+          <thead class="table-light"><tr><th scope="col">Fecha</th><th scope="col">Usuario</th><th scope="col">Acción</th><th scope="col">Detalle</th></tr></thead>
+          <tbody>
+            {% for h in historico %}
+            <tr>
+              <td class="text-nowrap">{{ h.fecha | fechaHora }}</td>
+              <td class="valor-historico">{{ h.usuario or '—' }}</td>
+              <td><span class="badge text-bg-{{ colores[h.accion] or 'secondary' }}">{{ h.accion | etiquetaAccion }}</span></td>
+              <td class="valor-historico">
+                {# Qué se tocó (cliente o contacto) y, si cambió un dato, el valor anterior y el nuevo #}
+                <div>{{ h.registro }}</div>
+                {% if h.campo %}
+                <div class="text-secondary small">
+                  <strong>{{ h.campo | etiquetaCampo }}:</strong>
+                  <span class="text-decoration-line-through">{% if h.campo == 'fechaAlta' %}{{ (h.valorAnterior | fecha) or '—' }}{% else %}{{ h.valorAnterior or '—' }}{% endif %}</span>
+                  <i class="bi bi-arrow-right mx-1" aria-label="cambia a"></i>
+                  <span>{% if h.campo == 'fechaAlta' %}{{ (h.valorNuevo | fecha) or '—' }}{% else %}{{ h.valorNuevo or '—' }}{% endif %}</span>
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if paginacionHistorico.totalPaginas > 1 %}
+      <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span class="text-secondary small">Página {{ paginacionHistorico.pagina }} de {{ paginacionHistorico.totalPaginas }}</span>
+        <nav aria-label="Paginación del histórico">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {% if paginacionHistorico.pagina == 1 %}disabled{% endif %}">
+              <a class="page-link" href="{{ urlHistorico(paginacionHistorico.pagina - 1) }}#historico" hx-get="{{ urlHistorico(paginacionHistorico.pagina - 1) }}" hx-target="#historico-contenido" hx-select="#historico-contenido" hx-swap="outerHTML">&laquo; Más recientes</a>
+            </li>
+            <li class="page-item {% if paginacionHistorico.pagina == paginacionHistorico.totalPaginas %}disabled{% endif %}">
+              <a class="page-link" href="{{ urlHistorico(paginacionHistorico.pagina + 1) }}#historico" hx-get="{{ urlHistorico(paginacionHistorico.pagina + 1) }}" hx-target="#historico-contenido" hx-select="#historico-contenido" hx-swap="outerHTML">Más antiguos &raquo;</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+      {% endif %}
+    </section>
+  </div>
+
+</div>
+
+{# Ventanas de confirmación (Bootstrap). Mover a la papelera desde la ficha pide escribir el CIF: doble verificación. #}
+{% if not cliente.eliminadoEn %}
+<div class="modal fade" id="modalBaja" tabindex="-1" aria-labelledby="tituloBaja" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="/clientes/{{ cliente.id }}/baja" data-doble-confirmacion>
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tituloBaja">Mover a la papelera a {{ cliente.empresa }}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>El cliente dejará de aparecer en el listado normal y pasará a la pestaña Papelera. <strong>No se borra nada</strong>: contactos, facturas e histórico se conservan y podrás restaurarlo cuando quieras.</p>
+        <label for="confirmacion" class="form-label">Para confirmar, escribe su CIF: <strong>{{ cliente.cif }}</strong></label>
+        <input type="text" class="form-control" id="confirmacion" name="confirmacion" autocomplete="off" data-confirmar="{{ cliente.cif }}" required>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-danger">Mover a la papelera</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% for c in cliente.contactos %}
+<div class="modal fade" id="modalContacto{{ c.id }}" tabindex="-1" aria-labelledby="tituloContacto{{ c.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="/clientes/{{ cliente.id }}/contactos/{{ c.id }}/eliminar">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tituloContacto{{ c.id }}">Eliminar contacto</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">¿Seguro que quieres eliminar a <strong>{{ c.nombre }}</strong>? Quedará anotado en el histórico. Un cliente siempre debe conservar al menos un contacto.</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-danger">Eliminar contacto</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}
