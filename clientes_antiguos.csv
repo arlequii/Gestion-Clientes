@@ -1,0 +1,19 @@
+empresa;cif;contacto;email;telefono;direccion;cp;ciudad;pais;comercial;estado;fecha_alta;factura;fecha_factura;base_imponible;iva
+Construcciones Ebro SL;B50123456;Marta Gil;marta.gil@construccionesebro.es;+34 976 123 456;Calle Alfonso I, 12;50003;Zaragoza;España;Elena Sanz;Activo;14/01/2025;F-2026-0101;03/09/2026;1.250;21%
+Construcciones Ebro SL;B50123456;Marta Gil;marta.gil@construccionesebro.es;+34 976 123 456;Calle Alfonso I, 12;50003;Zaragoza;España;Elena Sanz;Activo;14/01/2025;F-2026-0102;17/09/2026;1.875,60;21
+Clínica Dental Sonrisa SLP;B28765432;Lucía Moreno;lucia@clinicasonrisa.es;91 555 12 34;Calle de Alcalá, 200;28028;Madrid;España;Jordi Puig;Activo;5/3/25;F-2026-0103;05/09/2026;640.5;21%
+Hotel Mar Blau SA;A07123987;Toni Ferrer;toni.ferrer@hotelmarblau.com;971 22 33 44;Passeig Marítim, 8;07014;Palma;Spain;Jordi Puig;Activo;12-06-2025;F-2026-0104;10/09/2026;3.420,00;21%
+Logística Duero SL;B47222333;Raúl Sanz;raul@logisticaduero.es;983 44 55 66;Polígono San Cristóbal, nave 4;47012;Valladolid;España;Carmen Vega;Inactivo;20/02/2024;F-2026-0105;12/09/2026;415,25;21%
+Associazione Culturale Brera;IT01234560967;Giulia Bianchi;giulia@brera-cultura.it;+39 02 1234567;Via Brera, 28;20121;Milano;Italia;Elena Sanz;Activo;01/07/2025;F-2026-0106;15/09/2026;2.300;0%
+Vinhos do Porto Lda;PT509876543;João Silva;joao.silva@vinhosdoporto.pt;+351 912 345 678;Rua de Santa Catarina, 100;4000-447;Porto;PT;Carmen Vega;Activo;18/11/2025;F-2026-0107;22/09/2026;890,00;0%
+Vinhos do Porto Lda;PT509876543;João Silva;joao.silva@vinhosdoporto.pt;+351 912 345 678;Rua de Santa Catarina, 100;4000-447;Porto;Portugal;Carmen Vega;Activo;18/11/2025;F-2026-0108;31/09/2026;450,00;0%
+CONSTRUCCIONES EBRO, S.L.;b-50123456;Pablo Ruiz;pablo.ruiz@construccionesebro.es;976123457;Calle Alfonso I, 12;50003;ZARAGOZA;ESPAÑA;elena sanz;ACTIVO;2025-01-14;F-2026-0109;06/10/2026;529,50;21%
+Clínica Dental Sonrisa SLP;B28765432;Lucía Moreno;" Lucia@ClinicaSonrisa.es";+34915551234;Calle de Alcalá, 200;28028;Madrid;España;jordi puig;activo;05/03/2025;F-2026-0110;09/10/2026;980,40 €;21
+Hotel Mar Blau SA;A07123987;Toni Ferrer;toni.ferrer@hotelmarblau.com;971 22 33 44;Passeig Marítim, 8;07014;Palma;España;Jordi Puig;Activo;12/06/2025;F-2026-0111;12/10/2026;2.150;21%
+Associazione Culturale Brera;IT01234560967;Giulia Bianchi;giulia@brera-cultura.it;+39 02 1234567;Via Brera, 28;20121;Milano;Italy;Elena  Sanz;Activo;01/07/2025;F-2026-0112;14/10/2026;1.180,00;0
+Atelier Lumière SARL;FR12345678901;Claire Martin;claire.martin@atelier-lumiere.fr;+33 6 12 34 56 78;12 rue de Rivoli;75004;Paris;Francia;Carmen Vega;Activo;02/10/2026;;;;
+Logística Duero SL;B47222333;Raúl Sanz;RAUL@LOGISTICADUERO.ES;+34 983 445 566;Polígono San Cristóbal, nave 4;47012;Valladolid;España;Carmen Vega;Inactivo;20/02/2024;F-2026-0113;16/10/2026;;21%
+Hotel Mar Blau;;Toni Ferrer;toni.ferrer@hotelmarblau.com;971 22 33 44;Passeig Marítim, 8;07014;Palma;España;Jordi Puig;Activo;12/06/2025;F-2026-0114;19/10/2026;780,00;21%
+Construcciones Ebro SL;B50123456;Marta Gil;marta.gil@construccionesebro.es;+34 976 123 456;Calle Alfonso I, 12;50003;Zaragoza;España;Elena Sanz;Activo;14/01/2025;F-2026-0115;21/10/2026;520,80;21%
+Construcciones Ebro SL;B50123456;Marta Gil;marta.gil@construccionesebro.es;+34 976 123 456;Calle Alfonso I, 12;50003;Zaragoza;España;Elena Sanz;Activo;14/01/2025;F-2026-0115;21/10/2026;520,80;21%
+Vinhos do Porto Lda;PT509876543;João Silva;joao.silva@vinhosdoporto.pt;+351 912 345 678;Rua de Santa Catarina, 100;4000-447;Porto;Portugal;Carmen Vega;Activo;18/11/2025;F-2026-0116;23/10/2026;1.050,00;0%
